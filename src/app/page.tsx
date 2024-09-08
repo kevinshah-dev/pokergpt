@@ -26,7 +26,7 @@ export default function PokerHandAnalyzer() {
   const [isPreflop, setIsPreflop] = useState(false)
   const [numOpponents, setNumOpponents] = useState('1')
   const [opponents, setOpponents] = useState<Opponent[]>([{ bet: '', position: '' }])
-  const openai = new OpenAI();
+  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
   const handleOpponentChange = (index: number, field: keyof Opponent, value: string) => {
     const newOpponents = [...opponents]
