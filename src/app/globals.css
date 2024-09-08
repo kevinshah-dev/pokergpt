@@ -90,3 +90,7 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+.dialog-close-button-black [data-radix-collection-item] {
+  color: black !important;
+}

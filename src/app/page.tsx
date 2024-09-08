@@ -8,7 +8,9 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Loader2 } from "lucide-react"
+import "./globals.css";
 
 type Opponent = {
   bet: string;
@@ -25,6 +27,7 @@ export default function PokerHandAnalyzer() {
   const [isPreflop, setIsPreflop] = useState(false)
   const [numOpponents, setNumOpponents] = useState('1')
   const [opponents, setOpponents] = useState<Opponent[]>([{ bet: '', position: '' }])
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
 
   const handleOpponentChange = (index: number, field: keyof Opponent, value: string) => {
     const newOpponents = [...opponents]
@@ -42,6 +45,7 @@ export default function PokerHandAnalyzer() {
     e.preventDefault()
     setIsLoading(true)
     setAdvice('')
+    setIsDialogOpen(true)
 
     // const payload = {
     //   potSize,
@@ -51,7 +55,7 @@ export default function PokerHandAnalyzer() {
     //   isPreflop,
     //   opponents
     // }
-    const gptStringContent = `Pot Size: ${potSize}\nCommunity Cards: ${isPreflop ? 'this is preflop' : communityCards}\n My Hand Cards: ${handCards}\n My Position: ${position}\nIs Preflop: ${isPreflop}\nOpponents: ${opponents.map((opponent, index) => `Opponent ${index + 1}: Bet - ${opponent.bet}, Position - ${opponent.position}`).join('\n')}`
+    const gptStringContent = `Total Pot Size: ${potSize}\nCommunity Cards: ${isPreflop ? 'this is preflop' : communityCards}\n My Hand Cards: ${handCards}\n My Position: ${position}\nIs Preflop: ${isPreflop}\nOpponents: ${opponents.map((opponent, index) => `Opponent ${index + 1}: Bet - ${opponent.bet}, Position - ${opponent.position}`).join('\n')}`
     console.log(gptStringContent)
     try {
       const response = await fetch('/api/analyze-poker-hand', {
@@ -62,10 +66,11 @@ export default function PokerHandAnalyzer() {
         body: JSON.stringify({ gptStringContent }),
       });
 
-    
+      
       const data = await response.json()
-      if (data) {
-        setAdvice(data);
+      console.log("data", data);
+      if (data.advice) {
+        setAdvice(data.advice);
       } else {
         setAdvice('No advice received.');
       }
@@ -81,8 +86,16 @@ export default function PokerHandAnalyzer() {
     <div className="min-h-screen flex items-center justify-center">
     <Card className="w-full max-w-2xl mx-auto">
       <CardHeader>
-        <CardTitle>Poker Hand Analyzer</CardTitle>
-        <CardDescription>Enter your poker hand details to get GPT-powered advice</CardDescription>
+      <CardTitle className="flex items-center justify-between">
+          <span>PokerGPT</span>
+          <span className="text-2xl">
+            <span className="text-red-500">♥</span>
+            <span className="text-black">♠</span>
+            <span className="text-red-500">♦</span>
+            <span className="text-black">♣</span>
+          </span>
+        </CardTitle>
+        <CardDescription>Enter your poker hand details to get a GPT-powered analysis</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -96,7 +109,7 @@ export default function PokerHandAnalyzer() {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="potSize">Pot Size</Label>
+              <Label htmlFor="potSize">Total Pot Size</Label>
               <Input
                 id="potSize"
                 value={potSize}
@@ -177,23 +190,43 @@ export default function PokerHandAnalyzer() {
               </div>
             </div>
           ))}
-          <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? 'Analyzing...' : 'Get Advice'}
-          </Button>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen} >
+            <DialogTrigger asChild>
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Analyzing...
+                  </>
+                ) : (
+                  'Get Hand Analysis'
+                )}
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[800px] bg-white dialog-close-button-black">
+              <DialogHeader>
+                <DialogTitle className="text-black">PokerGPT Analysis</DialogTitle>
+                <DialogDescription className="text-black">
+                  Here's what our AI thinks about your hand:
+                </DialogDescription>
+              </DialogHeader>
+              <div className="mt-4">
+                {isLoading ? (
+                  <div className="flex items-center justify-center">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  </div>
+                ) : (
+                  <Textarea
+                    value={advice}
+                    readOnly
+                    className="w-full h-[300px] resize-none text-black"
+                  />
+                )}
+              </div>
+            </DialogContent>
+          </Dialog>
         </form>
       </CardContent>
-      {advice && (
-        <CardFooter>
-          <div className="w-full">
-            <h3 className="text-lg font-semibold mb-2">GPT Advice:</h3>
-            <Textarea
-              value={advice}
-              readOnly
-              className="w-full h-32"
-            />
-          </div>
-        </CardFooter>
-      )}
     </Card>
   </div>
   )
