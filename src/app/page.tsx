@@ -8,7 +8,6 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import OpenAI from "openai";
 
 
 type Opponent = {
@@ -26,7 +25,6 @@ export default function PokerHandAnalyzer() {
   const [isPreflop, setIsPreflop] = useState(false)
   const [numOpponents, setNumOpponents] = useState('1')
   const [opponents, setOpponents] = useState<Opponent[]>([{ bet: '', position: '' }])
-  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
   const handleOpponentChange = (index: number, field: keyof Opponent, value: string) => {
     const newOpponents = [...opponents]
@@ -56,19 +54,16 @@ export default function PokerHandAnalyzer() {
     const gptStringContent = `Pot Size: ${potSize}\nCommunity Cards: ${isPreflop ? 'this is preflop' : communityCards}\n My Hand Cards: ${handCards}\n My Position: ${position}\nIs Preflop: ${isPreflop}\nOpponents: ${opponents.map((opponent, index) => `Opponent ${index + 1}: Bet - ${opponent.bet}, Position - ${opponent.position}`).join('\n')}`
     console.log(gptStringContent)
     try {
-      // Replace with your actual GPT API endpoint
-      const completion = await openai.chat.completions.create({
-        model: "gpt-4o",
-        messages: [
-            { role: "system", content: "You are a very strong poker player. All pot sizes and bet sizes are in big blinds. You will analyze this hand and give me a recommendation on what to do. Be concise." },
-            {
-                role: "user",
-                content: gptStringContent,
-            },
-        ],
-    });
+      const response = await fetch('/api/analyze-poker-hand', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ gptStringContent }),
+      });
+
     
-      const data = await completion.choices[0].message.content
+      const data = await response.json()
       if (data) {
         setAdvice(data);
       } else {
