@@ -45,14 +45,14 @@ export default function PokerHandAnalyzer() {
     setIsLoading(true)
     setAdvice('')
 
-    const payload = {
-      potSize,
-      communityCards: isPreflop ? 'this is preflop' : communityCards,
-      handCards,
-      position,
-      isPreflop,
-      opponents
-    }
+    // const payload = {
+    //   potSize,
+    //   communityCards: isPreflop ? 'this is preflop' : communityCards,
+    //   handCards,
+    //   position,
+    //   isPreflop,
+    //   opponents
+    // }
     const gptStringContent = `Pot Size: ${potSize}\nCommunity Cards: ${isPreflop ? 'this is preflop' : communityCards}\n My Hand Cards: ${handCards}\n My Position: ${position}\nIs Preflop: ${isPreflop}\nOpponents: ${opponents.map((opponent, index) => `Opponent ${index + 1}: Bet - ${opponent.bet}, Position - ${opponent.position}`).join('\n')}`
     console.log(gptStringContent)
     try {
