@@ -1,101 +1,205 @@
-import Image from "next/image";
+'use client'
 
-export default function Home() {
+import { useState } from 'react'
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import OpenAI from "openai";
+
+
+type Opponent = {
+  bet: string;
+  position: string;
+}
+
+export default function PokerHandAnalyzer() {
+  const [potSize, setPotSize] = useState('')
+  const [communityCards, setCommunityCards] = useState('')
+  const [handCards, setHandCards] = useState('')
+  const [position, setPosition] = useState('')
+  const [advice, setAdvice] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const [isPreflop, setIsPreflop] = useState(false)
+  const [numOpponents, setNumOpponents] = useState('1')
+  const [opponents, setOpponents] = useState<Opponent[]>([{ bet: '', position: '' }])
+  const openai = new OpenAI();
+
+  const handleOpponentChange = (index: number, field: keyof Opponent, value: string) => {
+    const newOpponents = [...opponents]
+    newOpponents[index][field] = value
+    setOpponents(newOpponents)
+  }
+
+  const handleNumOpponentsChange = (value: string) => {
+    setNumOpponents(value)
+    const num = parseInt(value, 10)
+    setOpponents(Array(num).fill(0).map(() => ({ bet: '', position: '' })))
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsLoading(true)
+    setAdvice('')
+
+    const payload = {
+      potSize,
+      communityCards: isPreflop ? 'this is preflop' : communityCards,
+      handCards,
+      position,
+      isPreflop,
+      opponents
+    }
+    const gptStringContent = `Pot Size: ${potSize}\nCommunity Cards: ${isPreflop ? 'this is preflop' : communityCards}\n My Hand Cards: ${handCards}\n My Position: ${position}\nIs Preflop: ${isPreflop}\nOpponents: ${opponents.map((opponent, index) => `Opponent ${index + 1}: Bet - ${opponent.bet}, Position - ${opponent.position}`).join('\n')}`
+    console.log(gptStringContent)
+    try {
+      // Replace with your actual GPT API endpoint
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+            { role: "system", content: "You are a very strong poker player. All pot sizes and bet sizes are in big blinds. You will analyze this hand and give me a recommendation on what to do. Be concise." },
+            {
+                role: "user",
+                content: gptStringContent,
+            },
+        ],
+    });
+    
+      const data = await completion.choices[0].message.content
+      if (data) {
+        setAdvice(data);
+      } else {
+        setAdvice('No advice received.');
+      }
+    } catch (error) {
+      console.error('Error:', error)
+      setAdvice('Failed to get advice. Please try again.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+    <div className="min-h-screen flex items-center justify-center">
+    <Card className="w-full max-w-2xl mx-auto">
+      <CardHeader>
+        <CardTitle>Poker Hand Analyzer</CardTitle>
+        <CardDescription>Enter your poker hand details to get GPT-powered advice</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="flex items-center space-x-2">
+            <Checkbox 
+              id="preflop" 
+              checked={isPreflop}
+              onCheckedChange={(checked) => setIsPreflop(checked as boolean)}
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
-  );
+            <Label htmlFor="preflop">Preflop</Label>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="potSize">Pot Size</Label>
+              <Input
+                id="potSize"
+                value={potSize}
+                onChange={(e) => setPotSize(e.target.value)}
+                placeholder="e.g., 1000"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="position">Your Position</Label>
+              <Input
+                id="position"
+                value={position}
+                onChange={(e) => setPosition(e.target.value)}
+                placeholder="e.g., Button, Big Blind"
+                required
+              />
+            </div>
+          </div>
+          {!isPreflop && (
+            <div className="space-y-2">
+              <Label htmlFor="communityCards">Community Cards</Label>
+              <Input
+                id="communityCards"
+                value={communityCards}
+                onChange={(e) => setCommunityCards(e.target.value)}
+                placeholder="e.g., As Kh Qd"
+                required={!isPreflop}
+              />
+            </div>
+          )}
+          <div className="space-y-2">
+            <Label htmlFor="handCards">Your Hand</Label>
+            <Input
+              id="handCards"
+              value={handCards}
+              onChange={(e) => setHandCards(e.target.value)}
+              placeholder="e.g., Jc Td"
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="numOpponents">Number of Opponents</Label>
+            <Select onValueChange={handleNumOpponentsChange} value={numOpponents}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select number of opponents" />
+              </SelectTrigger>
+              <SelectContent>
+                {[1, 2, 3, 4, 5].map((num) => (
+                  <SelectItem key={num} value={num.toString()}>
+                    {num}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {opponents.map((opponent, index) => (
+            <div key={index} className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor={`opponentBet${index}`}>Opponent {index + 1} Bet</Label>
+                <Input
+                  id={`opponentBet${index}`}
+                  value={opponent.bet}
+                  onChange={(e) => handleOpponentChange(index, 'bet', e.target.value)}
+                  placeholder="e.g., 500"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor={`opponentPosition${index}`}>Opponent {index + 1} Position</Label>
+                <Input
+                  id={`opponentPosition${index}`}
+                  value={opponent.position}
+                  onChange={(e) => handleOpponentChange(index, 'position', e.target.value)}
+                  placeholder="e.g., Cut-off"
+                  required
+                />
+              </div>
+            </div>
+          ))}
+          <Button type="submit" className="w-full" disabled={isLoading}>
+            {isLoading ? 'Analyzing...' : 'Get Advice'}
+          </Button>
+        </form>
+      </CardContent>
+      {advice && (
+        <CardFooter>
+          <div className="w-full">
+            <h3 className="text-lg font-semibold mb-2">GPT Advice:</h3>
+            <Textarea
+              value={advice}
+              readOnly
+              className="w-full h-32"
+            />
+          </div>
+        </CardFooter>
+      )}
+    </Card>
+  </div>
+  )
 }
