@@ -199,7 +199,7 @@ export default function PokerHandAnalyzer() {
                     Analyzing...
                   </>
                 ) : (
-                  'Get Hand Analysis'
+                  "Get Hand Analysis"
                 )}
               </Button>
             </DialogTrigger>
