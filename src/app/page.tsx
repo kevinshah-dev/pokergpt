@@ -207,7 +207,7 @@ export default function PokerHandAnalyzer() {
               <DialogHeader>
                 <DialogTitle className="text-black">PokerGPT Analysis</DialogTitle>
                 <DialogDescription className="text-black">
-                  Here's what our AI thinks about your hand:
+                  "Here's what our AI thinks about your hand:"
                 </DialogDescription>
               </DialogHeader>
               <div className="mt-4">
