@@ -83,8 +83,9 @@ export default function PokerHandAnalyzer() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
-    <Card className="w-full max-w-2xl mx-auto">
+    <div className="min-h-screen flex flex-col justify-between">
+      <div className="flex-grow flex items-center justify-center">
+    <Card className="w-full max-w-2xl mx-auto mb-0">
       <CardHeader>
       <CardTitle className="flex items-center justify-between">
           <span>PokerGPT</span>
@@ -228,6 +229,10 @@ export default function PokerHandAnalyzer() {
         </form>
       </CardContent>
     </Card>
+    </div>
+    <div className="text-center py-2 text-lg text-gray-500 mt-0">
+        Created by Kevin Shah
+    </div>
   </div>
   )
 }
